@@ -1,2 +1,9 @@
 stable-baselines3[extra]==2.4.0
 sb3-contrib==2.4.0
+swig
+gymnasium[mujoco]
+
+--extra-index-url  https://download.pytorch.org/whl/cu121
+torch
+torchvision
+torchaudio
