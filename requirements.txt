@@ -7,3 +7,6 @@ gymnasium[mujoco]
 torch
 torchvision
 torchaudio
+
+git+https://github.com/martius-lab/hockey-env.git
+
