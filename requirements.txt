@@ -10,3 +10,4 @@ torchaudio
 
 git+https://github.com/martius-lab/hockey-env.git
 
+pyyaml

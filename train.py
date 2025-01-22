@@ -1,8 +1,8 @@
 import yaml
 from sac.trainer import Trainer
-import gym
+import gymnasium as gym
 
-from common.single_player_env import SinglePlayerHockeyEnv
+from sac.custom_env import SinglePlayerHockeyEnv
 
 def load_config():
     # load config from yaml file

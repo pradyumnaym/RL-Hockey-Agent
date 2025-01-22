@@ -1,3 +1,4 @@
+import os
 import torch
 
 from .agent import SACAgent 
@@ -13,7 +14,7 @@ class Trainer:
         self.replay_buffer = ReplayBuffer(config['replay_buffer_size'])
         
 
-    def evaluate(self):
+    def evaluate(self, train_episode):
         self.agent.eval()
         mean_reward = 0
         win_rate = 0
@@ -24,26 +25,26 @@ class Trainer:
                 action = self.agent.act(obs)
                 next_state, reward, done, truncated, _info = self.env.step(action)
 
+                episode_reward += reward
+
                 if done or truncated:
                     # check for winner
                     # if _info['winner'] == 1:
                     #     self.logger.log({'eval_reward': reward})
                     if 'winner' in _info:
                         if _info['winner'] == 1:
-                            episode_reward += 1
                             win_rate += 1
                         break
 
-                    episode_reward += reward
-                    break
-                
             mean_reward += episode_reward
             
         mean_reward /= self.config['eval_episodes']
         win_rate /= self.config['eval_episodes']
-        return {'eval_reward': mean_reward, 'eval_win_rate': win_rate}
+        return {'train_episode': train_episode, 'eval_reward': mean_reward, 'eval_win_rate': win_rate}
 
     def train(self):
+        out_folder = self.config['out_folder']
+        os.makedirs(out_folder, exist_ok=True)
         self.agent.train()
         
         iteration = 0
@@ -90,8 +91,7 @@ class Trainer:
 
             if episode % self.config['eval_freq'] == 0:
                 # save model
-                torch.save(self.agent, f'checkpoints/sac_agent.pth')
+                torch.save(self.agent, f'{out_folder}/sac_agent.pth')
 
-                eval_results = self.evaluate()
-                eval_results['train_episode'] = episode
-                self.logger.log(eval_results)
+                eval_results = self.evaluate(train_episode=episode)
+                self.logger.log_metrics(eval_results)
