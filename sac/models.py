@@ -27,8 +27,11 @@ class Actor(nn.Module):
 
         self.action_high = torch.tensor(action_space.high)
         self.action_low = torch.tensor(action_space.low)
-        self.scale = (self.action_high - self.action_low) / 2
-        self.offset = (self.action_high + self.action_low) / 2
+
+        # Compute scale and offset from the buffers
+        self.register_buffer("scale", (self.action_high - self.action_low) / 2)
+        self.register_buffer("offset", (self.action_high + self.action_low) / 2)
+
 
         init_weights(self)
 
