@@ -10,7 +10,6 @@ class ReplayBuffer:
     def add(self, obs, next_state, action, reward, done):
         if len(self.buffer) < self.max_size:
             self.buffer.append((obs, next_state, action, reward, done))
-            self.current_idx += 1
         else:
             self.buffer[self.current_idx] = (obs, next_state, action, reward, done)
         self.current_idx = (self.current_idx + 1) % self.max_size

@@ -1,5 +1,6 @@
 import os
 import torch
+import time
 
 from .agent import SACAgent 
 from common.replay_buffer import ReplayBuffer
@@ -23,14 +24,12 @@ class Trainer:
             episode_reward = 0
             for step in range(self.config['max_steps_in_episode']):
                 action = self.agent.act(obs)
-                next_state, reward, done, truncated, _info = self.env.step(action)
+                obs, reward, done, truncated, _info = self.env.step(action)
 
                 episode_reward += reward
 
                 if done or truncated:
                     # check for winner
-                    # if _info['winner'] == 1:
-                    #     self.logger.log({'eval_reward': reward})
                     if 'winner' in _info:
                         if _info['winner'] == 1:
                             win_rate += 1
@@ -48,7 +47,8 @@ class Trainer:
         self.agent.train()
         
         iteration = 0
-        for episode in range(self.config['max_episodes']):
+        start_time = time.time()
+        for episode in range(1, self.config['max_episodes']+1):
             obs, _ = self.env.reset()
             print("==== Episode: ", episode, "=====")
             for step in range(self.config['max_steps_in_episode']):
@@ -71,6 +71,7 @@ class Trainer:
             mean_actor_loss = 0
             mean_buffer_reward = 0
             mean_alpha_loss = 0
+            
             for _ in range(self.config['grad_steps']):
                 self.agent.train()
                 data = self.replay_buffer.sample(self.config['batch_size'])
@@ -86,8 +87,14 @@ class Trainer:
             mean_actor_loss /= self.config['grad_steps']
             mean_buffer_reward /= self.config['grad_steps']
             mean_alpha_loss /= self.config['grad_steps']
+
+            end_time = time.time()
+            print(f"Time taken to train {episode} episodes: {end_time - start_time:.2f} seconds")
+
+            self.agent.schedulers_step()
             
-            self.logger.log({'train_episode': episode, 'critic_loss': mean_critic_loss, 'actor_loss': mean_actor_loss, 'buffer_reward': mean_buffer_reward, 'alpha_loss': mean_alpha_loss})
+            self.logger.log({'train_episode': episode, 'critic_loss': mean_critic_loss, 'actor_loss': mean_actor_loss, 
+                             'buffer_reward': mean_buffer_reward, 'alpha_loss': mean_alpha_loss})
 
             if episode % self.config['eval_freq'] == 0:
                 # save model

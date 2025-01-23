@@ -1,4 +1,5 @@
 import yaml
+import os
 from sac.trainer import Trainer
 import gymnasium as gym
 import torch
@@ -38,11 +39,13 @@ if __name__ == '__main__':
     agent = torch.load(config['out_folder'] + '/sac_agent.pth')
     agent.eval()
     
-    for i in range(1):
+    for i in range(10):
+        print(f"Episode {i+1} of 10")
         frames = []
         obs, _ = env.reset()
         done = False
         step = 0
+
         while not done and step < 250:
             step += 1
             action = agent.act(obs)
@@ -53,4 +56,5 @@ if __name__ == '__main__':
 
 
         env.close()
-        save_frames_as_gif(frames, path='./', filename='gym_animation1.gif')
+        os.makedirs('gifs', exist_ok=True)
+        save_frames_as_gif(frames, path='./', filename=f'gifs/gym_animation{i}.gif')

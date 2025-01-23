@@ -47,18 +47,19 @@ class SinglePlayerHockeyEnv(gym.Env):
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
         self._step = 0
+        self._first_time_touch = 1
+        self._touched = 0
 
     def reward_scheme(self, reward, _info):
-        touched = _info['reward_touch_puck']
-        first_time_touch = 1 - touched
+        self._touched = max(self._touched, _info['reward_touch_puck'])
 
         step_reward = (
             reward  
             + 5 * _info['reward_closeness_to_puck']
-            - (1 - touched) * 0.1
-            + touched * first_time_touch * 0.1 * self._step
+            - (1 - self._touched) * 0.1
+            + self._touched * self._first_time_touch * 0.1 * self._step
         )
-        first_time_touch = 1 - touched
+        self._first_time_touch = 1 - self._touched
         return step_reward
 
     def step(self, action):
@@ -80,7 +81,10 @@ class SinglePlayerHockeyEnv(gym.Env):
         """
         Reset the environment.
         """
-
+        self._step = 0
+        self._touched = 0
+        self._first_time_touch = 1
+        
         return self.env.reset(*args, **kwargs)
     
     def render(self, *args, **kwargs):

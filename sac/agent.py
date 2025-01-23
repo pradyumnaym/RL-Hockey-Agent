@@ -22,7 +22,14 @@ class SACAgent(nn.Module):
         self.actor_scheduler = optim.lr_scheduler.MultiStepLR(self.actor_optimizer, milestones=config['actor_lr_milestones'], gamma=config['actor_lr_gamma'])
         self.critic_scheduler = optim.lr_scheduler.MultiStepLR(self.critic_optimizer, milestones=config['critic_lr_milestones'], gamma=config['critic_lr_gamma'])
 
-        self.device = config['device'] if torch.cuda.is_available() else 'cpu'
+        if config['device'] == 'cuda' and torch.cuda.is_available():
+            self.device = config['device']
+        elif config['device'] == 'mps' and torch.backends.mps.is_available():
+            self.device = config['device']
+        else:
+            self.device = 'cpu'
+
+        print(f"Using device: {self.device}")
 
         # hard copy critic target
         self.critic_target.hard_copy(self.critic)
