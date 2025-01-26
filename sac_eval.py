@@ -11,7 +11,7 @@ from sac.agent import SACAgent
 
 def load_config():
     # load config from yaml file
-    with open('configs/sac_v0.yaml', 'r') as f:
+    with open('configs/sac_v1.yaml', 'r') as f:
         config = yaml.safe_load(f)
     return config
 

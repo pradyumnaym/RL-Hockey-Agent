@@ -5,6 +5,8 @@ import gymnasium as gym
 from importlib import reload
 from stable_baselines3.common.env_checker import check_env
 
+from gymnasium.spaces import Box
+
 def basic_sum_intermediate(info):
     """
     Combine the various rewards from the info dictionary into a single scalar reward.
@@ -44,7 +46,7 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         self.env = h_env.HockeyEnv()
         self.opponent =  h_env.BasicOpponent(weak=weak_mode)
-        self.action_space = self.env.action_space
+        self.action_space = Box(low=-1, high=1, shape=(4,))
         self.observation_space = self.env.observation_space
         self._step = 0
         self._first_time_touch = 1

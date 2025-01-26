@@ -33,8 +33,6 @@ class Actor(nn.Module):
         self.register_buffer("offset", (self.action_high + self.action_low) / 2)
 
 
-        init_weights(self)
-
     def forward(self, state):
         x = self.feedforward(state)
         x = F.relu(x)

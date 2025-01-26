@@ -44,12 +44,12 @@ class Trainer:
     def train(self):
         out_folder = self.config['out_folder']
         os.makedirs(out_folder, exist_ok=True)
-        self.agent.train()
         
         iteration = 0
         start_time = time.time()
         for episode in range(1, self.config['max_episodes']+1):
             obs, _ = self.env.reset()
+            self.agent.train()
             print("==== Episode: ", episode, "=====")
             for step in range(self.config['max_steps_in_episode']):
                 iteration += 1

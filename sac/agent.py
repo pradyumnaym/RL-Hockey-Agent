@@ -16,8 +16,8 @@ class SACAgent(nn.Module):
         self.critic = Critic(obs_dim, critic_hidden_dims, action_dim)
         self.critic_target = Critic(obs_dim, critic_hidden_dims, action_dim)
 
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=config['actor_lr'], eps=0.000001)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=config['critic_lr'], eps=0.000001)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=config['actor_lr'],  eps=0.000001)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=config['critic_lr'])
 
         self.actor_scheduler = optim.lr_scheduler.MultiStepLR(self.actor_optimizer, milestones=config['actor_lr_milestones'], gamma=config['actor_lr_gamma'])
         self.critic_scheduler = optim.lr_scheduler.MultiStepLR(self.critic_optimizer, milestones=config['critic_lr_milestones'], gamma=config['critic_lr_gamma'])
