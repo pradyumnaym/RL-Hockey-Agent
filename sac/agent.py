@@ -89,13 +89,6 @@ class SACAgent(nn.Module):
 
         # compute critic loss
         q1, q2 = self.critic(state, action)
-        # print("next action:", next_action, "action:", action)
-        # print("action:", action.shape, "next_action:", next_action.shape)
-        # print("state:", state.shape, "next_state:", next_state.shape)
-        # print("Q:", q1.shape, q2.shape, target_q1.shape, target_q2.shape, target_q.shape, next_log_prob.shape)
-        # print("target_q:", target_q)
-        # print("q1:", q1)
-        # exit()
         critic_loss = F.mse_loss(q1, target_q) + F.mse_loss(q2, target_q)
 
         # update critic

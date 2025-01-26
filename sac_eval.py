@@ -11,7 +11,7 @@ from sac.agent import SACAgent
 
 def load_config():
     # load config from yaml file
-    with open('configs/sac.yaml', 'r') as f:
+    with open('configs/sac_v0.yaml', 'r') as f:
         config = yaml.safe_load(f)
     return config
 
@@ -71,7 +71,7 @@ def evaluate(agent, env, config):
 if __name__ == '__main__':
     config = load_config()
     # env = gym.make('Pendulum-v1', render_mode="rgb_array")
-    env = SinglePlayerHockeyEnv(weak_mode=True)
+    env = SinglePlayerHockeyEnv(weak_mode=False)
     env.reset()
     # agent = SACAgent(config, env.observation_space.shape[0], env.action_space.shape[0], env.action_space)
     agent = torch.load(config['out_folder'] + '/sac_agent.pth')
