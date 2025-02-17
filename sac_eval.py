@@ -4,14 +4,15 @@ import gymnasium as gym
 import torch
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import argparse
 
 from sac.custom_env import SinglePlayerHockeyEnv
 
 from sac.agent import SACAgent
 
-def load_config():
+def load_config(config_path):
     # load config from yaml file
-    with open('configs/sac_v1.yaml', 'r') as f:
+    with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     return config
 
@@ -67,11 +68,16 @@ def evaluate(agent, env, config):
     loss_rate /= config['eval_episodes']
     return {'eval_reward': mean_reward, 'eval_win_rate': win_rate, 'eval_loss_rate': loss_rate}
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Evaluate SAC Agent")
+    parser.add_argument('--config', type=str, default='configs/sac_v1.yaml', help='Path to the configuration file')
+    return parser.parse_args()
 
 if __name__ == '__main__':
-    config = load_config()
+    args = parse_args()
+    config = load_config(args.config)
     # env = gym.make('Pendulum-v1', render_mode="rgb_array")
-    env = SinglePlayerHockeyEnv(weak_mode=False)
+    env = SinglePlayerHockeyEnv(weak_mode=True)
     env.reset()
     # agent = SACAgent(config, env.observation_space.shape[0], env.action_space.shape[0], env.action_space)
     agent = torch.load(config['out_folder'] + '/sac_agent.pth')

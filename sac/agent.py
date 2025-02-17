@@ -41,7 +41,7 @@ class SACAgent(nn.Module):
         self.entropy_tuning = config['entropy_tuning']
         self.alpha = config['alpha']
         if self.entropy_tuning:
-            self.log_alpha = torch.tensor(np.log(self.alpha), requires_grad=True).to(self.device)
+            self.register_buffer("log_alpha", torch.tensor(np.log(self.alpha), requires_grad=True).to(self.device))
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=config['alpha_lr'])
             self.alpha_scheduler = optim.lr_scheduler.MultiStepLR(self.alpha_optimizer, milestones=config['alpha_lr_milestones'], gamma=config['alpha_lr_gamma'])
             self.target_entropy = -torch.prod(torch.Tensor(action_dim).to(self.device)).requires_grad_(False)
@@ -115,6 +115,9 @@ class SACAgent(nn.Module):
         # update alpha
         if self.entropy_tuning:
             alpha_loss = -(self.log_alpha * (log_prob + self.target_entropy).detach()).mean()
+            # print("log_prob:", log_prob)
+            # print("target_entropy:", self.target_entropy)
+            # print("alpha_loss:", alpha_loss)
             self.alpha_optimizer.zero_grad()
             alpha_loss.backward()
             self.alpha_optimizer.step()
