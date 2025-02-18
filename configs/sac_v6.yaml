@@ -1,0 +1,45 @@
+
+actor_hidden_dims: [256, 256]
+critic_hidden_dims: [256, 256]
+
+actor_lr: 0.0001
+critic_lr: 0.0001
+alpha_lr: 0.0001
+
+actor_lr_milestones: [15000]
+critic_lr_milestones: [15000]
+
+actor_lr_gamma: 0.5
+critic_lr_gamma: 0.5
+alpha_lr_gamma: 0.5
+
+discount_factor: 0.95
+
+critic_target_update_freq: 1
+critic_target_tau: 0.005
+
+device: 'cpu'
+max_steps_in_episode: 250
+max_episodes: 20000
+
+entropy_tuning: true
+alpha: 0.2
+alpha_lr_milestones: [10000]
+alpha_lr_gamma: 0.99
+
+replay_buffer_size: 100000
+batch_size: 128
+grad_steps: 32
+
+eval_freq: 500
+eval_episodes: 1000
+
+# opponent pooler
+weak_prob: 0.1
+strong_prob: 0.2
+self_prob: 0.7
+update_self_opponent_freq: 1000
+
+resume_from: "checkpoints/sac_v5/sac_agent.pth"
+
+out_folder: 'checkpoints/sac_v6.1'
