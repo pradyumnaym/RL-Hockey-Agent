@@ -50,13 +50,22 @@ class Logger:
         df = pd.DataFrame(self.metrics)
         df.to_csv(self.metric_csv_file, index=False)
         # visualize and save figure
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 20))
         
-        df.plot(x='train_episode', y='eval_win_rate', ax=ax1)
-        ax1.set_title('Win Rate')
+        if 'eval_win_rate_weak' in df.columns:
+            df.plot(x='train_episode', y='eval_win_rate_weak', ax=ax1)
+            ax1.set_title('Win Rate Weak')
+
+        if 'eval_win_rate_strong' in df.columns:
+            df.plot(x='train_episode', y='eval_win_rate_strong', ax=ax2)
+            ax2.set_title('Win Rate Strong')
+
+        if 'eval_win_rate_self' in df.columns:
+            df.plot(x='train_episode', y='eval_win_rate_self', ax=ax3)
+            ax3.set_title('Win Rate Self')
         
-        df.plot(x='train_episode', y='eval_reward', ax=ax2)
-        ax2.set_title('Reward')
+        df.plot(x='train_episode', y='eval_reward', ax=ax4)
+        ax4.set_title('Reward')
         
         plt.tight_layout()
         plt.savefig(self.metric_csv_file.replace('.csv', '_metrics.png'))

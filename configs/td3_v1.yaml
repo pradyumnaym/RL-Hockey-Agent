@@ -15,7 +15,7 @@ max_episodes: 20000
 agent_name: TD3
 
 trainer:
-    _target_: trainer.Trainer
+    _target_: common.trainer.Trainer
     env:
         _target_: td3.custom_env.SinglePlayerHockeyEnv
         weak_mode: True
@@ -60,3 +60,12 @@ agent:
     critic:
         hidden_dims: [256, 256]
         activation: relu
+
+    resume_from: null
+
+# opponent pooler
+opponent_pooler:
+    weak_prob: 1.0
+    strong_prob: 0.0
+    self_prob: 0.0
+    update_self_opponent_freq: 1000
