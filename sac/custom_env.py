@@ -52,6 +52,8 @@ class SinglePlayerHockeyEnv(gym.Env):
         self._first_time_touch = 1
         self._touched = 0
 
+        self.reset()
+
     def reward_scheme(self, reward, _info):
         self._touched = max(self._touched, _info['reward_touch_puck'])
 
