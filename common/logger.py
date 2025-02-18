@@ -12,7 +12,6 @@ class Logger:
         self.metrics = []
 
     def log(self, message_dict):
-        print(message_dict)
         self.losses.append(message_dict)
         # to csv
         df = pd.DataFrame(self.losses)

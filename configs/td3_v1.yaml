@@ -18,7 +18,8 @@ trainer:
     logger:
         _target_: common.logger.Logger
     replay_buffer:
-        _target_: common.replay_buffer.ReplayBuffer
+        _target_: common.replay_buffer.ReplayBufferTorch
+        device: ${device}                                   # ONLY for the Torch buffer.
         max_size: 100000
 
 agent:

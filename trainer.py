@@ -1,13 +1,13 @@
 import os
 import torch
 import time
+import hydra
 
 from collections import defaultdict
+from tqdm import tqdm
 
-from td3.agent import TD3
 from common.replay_buffer import ReplayBuffer
 from common.logger import Logger
-
 from td3.agent import TD3
 from sac.agent import SACAgent
 
@@ -16,7 +16,6 @@ class Trainer:
         self.config = cfg
         self.env = env
         self.agent = globals()[cfg.agent_name](cfg.agent, env.observation_space.shape[0], env.action_space)
-        self.agent = TD3(cfg.agent, env.observation_space.shape[0], env.action_space)
         self.logger = logger
         self.replay_buffer = replay_buffer
 
@@ -52,10 +51,10 @@ class Trainer:
         iteration = 0
         start_time = time.time()
 
-        for episode in range(1, self.config.max_episodes+1):
+        pbar = tqdm(range(1, self.config.max_episodes+1), position=0, leave=True)
+        for episode in pbar:
             obs, _ = self.env.reset()
             self.agent.train()
-            print("==== Episode: ", episode, "=====")
             for step in range(self.config.max_steps_in_episode):
                 iteration += 1
                 action = self.agent.act(obs)
@@ -83,7 +82,8 @@ class Trainer:
 
             mean_losses_dict = {key: sum(value) / len(value) for key, value in losses_dict.items()}
 
-            print(f"Episode: {episode}, Mean Losses: {mean_losses_dict}, Time: {time.time() - start_time}")
+            rounded_losses = {k: round(v, 2) for k, v in mean_losses_dict.items()}
+            pbar.set_description(f"Losses: {rounded_losses}")
 
             self.agent.schedulers_step()
 
@@ -96,4 +96,4 @@ class Trainer:
                 metrics = self.evaluate(episode)
                 self.logger.log_metrics(metrics)
 
-                torch.save(self.agent, os.path.join(self.config.out_folder, 'model.pth'))
+                torch.save(self.agent, os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model.pth'))

@@ -34,11 +34,12 @@ class TD3(nn.Module):
         state, next_state, action, reward, done = data
 
         device = next(self.actor.parameters()).device
-        state = torch.tensor(state, dtype=torch.float32).to(device)
-        next_state = torch.tensor(next_state, dtype=torch.float32).to(device)
-        action = torch.tensor(action, dtype=torch.float32).to(device)
-        reward = torch.tensor(reward, dtype=torch.float32).to(device)
-        done = torch.tensor(done, dtype=torch.float32).to(device)
+        if not torch.is_tensor(state):
+            state = torch.tensor(state, dtype=torch.float32).to(device)
+            next_state = torch.tensor(next_state, dtype=torch.float32).to(device)
+            action = torch.tensor(action, dtype=torch.float32).to(device)
+            reward = torch.tensor(reward, dtype=torch.float32).to(device).unsqueeze(1)
+            done = torch.tensor(done, dtype=torch.float32).to(device).unsqueeze(1)
 
         # Compute the TD target 
         with torch.no_grad():
@@ -54,6 +55,7 @@ class TD3(nn.Module):
         # Compute the critic loss
         Q1, Q2 = self.critic(state, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+
 
         # Update the critic
         self.critic_optimizer.zero_grad()
@@ -74,7 +76,6 @@ class TD3(nn.Module):
             # Update the target networks
             self.actor_target.update(self.actor)
             self.critic_target.update(self.critic)
-
 
         return {
             'critic_loss': critic_loss.item(),
