@@ -77,7 +77,7 @@ if __name__ == '__main__':
     args = parse_args()
     config = load_config(args.config)
     # env = gym.make('Pendulum-v1', render_mode="rgb_array")
-    env = SinglePlayerHockeyEnv(weak_mode=True)
+    env = SinglePlayerHockeyEnv(weak_mode=False)
     env.reset()
     # agent = SACAgent(config, env.observation_space.shape[0], env.action_space.shape[0], env.action_space)
     agent = torch.load(config['out_folder'] + '/sac_agent.pth')

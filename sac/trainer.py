@@ -14,7 +14,7 @@ class Trainer:
         self.agent = SACAgent(config, env.observation_space.shape[0], env.action_space.shape[0], env.action_space)
         self.resume_from = config.get('resume_from', None)
         if self.resume_from is not None:
-            state_dict = torch.load(self.resume_from).state_dict()
+            state_dict = torch.load(self.resume_from, weights_only=False).state_dict()
 
             # dirty fix, TODO: remove later
             if 'log_alpha' not in state_dict:
@@ -137,5 +137,5 @@ class Trainer:
             if episode % self.config['update_self_opponent_freq'] == 0:
                 # only update self opponent if the current win rate > 55%
                 if eval_results.get('eval_win_rate_self', 0) > 0.55:
-                    tmp_opponent = torch.load(f'{out_folder}/sac_agent.pth')
+                    tmp_opponent = torch.load(f'{out_folder}/sac_agent.pth', weights_only=False)
                     self.opponent_pooler.update_self_opponent(tmp_opponent)
