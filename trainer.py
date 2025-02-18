@@ -3,6 +3,7 @@ import torch
 import time
 import hydra
 
+import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
 
@@ -12,12 +13,13 @@ from td3.agent import TD3
 from sac.agent import SACAgent
 
 class Trainer:
-    def __init__(self, cfg, env, logger, replay_buffer):
+    def __init__(self, cfg, env, logger, replay_buffer, action_noise=None):
         self.config = cfg
         self.env = env
         self.agent = globals()[cfg.agent_name](cfg.agent, env.observation_space.shape[0], env.action_space)
         self.logger = logger
         self.replay_buffer = replay_buffer
+        self.action_noise = action_noise
 
     def evaluate(self, train_episode):
         self.agent.eval()
@@ -46,20 +48,33 @@ class Trainer:
         return {'train_episode': train_episode, 'eval_reward': mean_reward, 'eval_win_rate': win_rate}
     
     def train(self):
+
         self.agent.to(self.config.device)
-    
+        best_win_rate = 0
         iteration = 0
 
         pbar = tqdm(range(1, self.config.max_episodes+1), position=0, leave=True)
         for episode in pbar:
-            start_time = time.time()
+
+            # Collect the rollouts, if noise if available, add it to the actions in the normalised space
             obs, _ = self.env.reset()
             self.agent.train()
-            for step in range(self.config.max_steps_in_episode):
+
+            if self.action_noise is not None:
+                self.action_noise.reset()
+
+            # Collect the rollouts
+            for _ in range(self.config.max_steps_in_episode):
                 iteration += 1
                 action = self.agent.act(obs)
-                next_state, reward, done, truncated, _info = self.env.step(action)
 
+                # Add noise to the action
+                if self.action_noise is not None:
+                    noised_action = self.agent.actor.scale_action(action) + self.action_noise()
+                    noised_action = np.clip(noised_action, -1, 1)
+                    action = self.agent.actor.unscale_action(noised_action)
+
+                next_state, reward, done, truncated, _info = self.env.step(action)
                 self.replay_buffer.add(obs, next_state, action, reward, done)
 
                 if done or truncated:
@@ -67,11 +82,11 @@ class Trainer:
 
                 obs = next_state
 
-            if self.replay_buffer.size() < self.config.batch_size:
+            # If in initial period 
+            if self.replay_buffer.size() < self.config.batch_size or episode < self.config.start_training_after:
                 continue
 
             losses_dict = defaultdict(list)
-
             self.agent.train()
             for _ in range(self.config.grad_steps):
                 data = self.replay_buffer.sample(self.config.batch_size)
@@ -81,7 +96,6 @@ class Trainer:
                     losses_dict[key].append(value)
 
             mean_losses_dict = {key: sum(value) / len(value) for key, value in losses_dict.items()}
-
             rounded_losses = {k: round(v, 2) for k, v in mean_losses_dict.items()}
             pbar.set_description(f"Losses: {rounded_losses}")
 
@@ -95,5 +109,9 @@ class Trainer:
             if episode % self.config.eval_freq == 0:
                 metrics = self.evaluate(episode)
                 self.logger.log_metrics(metrics)
+
+                if metrics['eval_win_rate'] > best_win_rate:
+                    best_win_rate = metrics['eval_win_rate']
+                    torch.save(self.agent, os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, f'best_model_{episode}.pth'))
 
                 torch.save(self.agent, os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model.pth'))

@@ -1,5 +1,8 @@
-batch_size: 128
+batch_size: 256
 grad_steps: 32
+
+# number of episodes to collect experience from before starting training
+start_training_after: 100
 
 eval_freq: 500
 log_freq: 100
@@ -22,10 +25,15 @@ trainer:
         _target_: common.replay_buffer.ReplayBufferTorch
         device: ${device}                                   # ONLY for the Torch buffer.
         max_size: 100000
+    action_noise:
+        _target_: pink.PinkActionNoise
+        sigma: 0.3
+        seq_len: ${max_steps_in_episode}
+        action_dim: 8
 
 agent:
-    actor_lr: 0.0003
-    critic_lr: 0.0003
+    actor_lr: 0.0007
+    critic_lr: 0.0007
 
     actor_lr_milestones: [5000, 10000]
     critic_lr_milestones: [5000, 10000]
@@ -33,7 +41,7 @@ agent:
     actor_lr_gamma: 0.5
     critic_lr_gamma: 0.5
 
-    discount_factor: 0.95
+    discount_factor: 0.99
 
     critic_target_update_freq: 1
     critic_target_tau: 0.005
