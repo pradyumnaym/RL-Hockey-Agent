@@ -4,14 +4,18 @@ import time
 
 from collections import defaultdict
 
-from .agent import TD3
+from td3.agent import TD3
 from common.replay_buffer import ReplayBuffer
 from common.logger import Logger
+
+from td3.agent import TD3
+from sac.agent import SACAgent
 
 class Trainer:
     def __init__(self, cfg, env, logger, replay_buffer):
         self.config = cfg
         self.env = env
+        self.agent = globals()[cfg.trainer.agent](cfg.agent, env.observation_space.shape[0], env.action_space)
         self.agent = TD3(cfg.agent, env.observation_space.shape[0], env.action_space)
         self.logger = logger
         self.replay_buffer = replay_buffer
