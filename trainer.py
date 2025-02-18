@@ -15,7 +15,7 @@ class Trainer:
     def __init__(self, cfg, env, logger, replay_buffer):
         self.config = cfg
         self.env = env
-        self.agent = globals()[cfg.trainer.agent](cfg.agent, env.observation_space.shape[0], env.action_space)
+        self.agent = globals()[cfg.agent_name](cfg.agent, env.observation_space.shape[0], env.action_space)
         self.agent = TD3(cfg.agent, env.observation_space.shape[0], env.action_space)
         self.logger = logger
         self.replay_buffer = replay_buffer

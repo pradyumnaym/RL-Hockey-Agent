@@ -8,9 +8,10 @@ device: 'cuda'
 max_steps_in_episode: 250
 max_episodes: 20000
 
+agent_name: TD3
+
 trainer:
-    agent: TD3
-    _target_: td3.trainer.Trainer
+    _target_: trainer.Trainer
     env:
         _target_: td3.custom_env.SinglePlayerHockeyEnv
         weak_mode: True
