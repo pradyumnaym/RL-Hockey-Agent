@@ -1,0 +1,54 @@
+batch_size: 128
+grad_steps: 32
+
+eval_freq: 500
+log_freq: 100
+eval_episodes: 1000
+
+device: 'cuda'
+max_steps_in_episode: 250
+max_episodes: 20000
+
+agent_name: TD3
+
+trainer:
+    _target_: trainer.Trainer
+    env:
+        _target_: td3.custom_env.SinglePlayerHockeyEnv
+        weak_mode: True
+    logger:
+        _target_: common.logger.Logger
+    replay_buffer:
+        _target_: common.replay_buffer.ReplayBufferTorch
+        device: ${device}                                   # ONLY for the Torch buffer.
+        max_size: 100000
+
+agent:
+    actor_lr: 0.0003
+    critic_lr: 0.0003
+
+    actor_lr_milestones: [5000, 10000]
+    critic_lr_milestones: [5000, 10000]
+
+    actor_lr_gamma: 0.5
+    critic_lr_gamma: 0.5
+
+    discount_factor: 0.95
+
+    critic_target_update_freq: 1
+    critic_target_tau: 0.005
+
+    policy_noise: 0.2
+    noise_clip: 0.5
+
+    policy_delay: 2
+    tau: 0.005
+    
+    actor:
+        hidden_dims: [256, 256]
+        activation: relu
+        output_activation: tanh
+
+    critic:
+        hidden_dims: [256, 256]
+        activation: relu

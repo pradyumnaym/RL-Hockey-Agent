@@ -3,6 +3,7 @@ sb3-contrib==2.4.0
 swig
 gymnasium[mujoco]
 pyyaml
+hydra-core==1.3.2
 
 hockey @ git+https://github.com/martius-lab/hockey-env.git
 

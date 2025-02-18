@@ -5,6 +5,9 @@ import gymnasium as gym
 from importlib import reload
 from stable_baselines3.common.env_checker import check_env
 
+def new_reward_scheme(info):
+    return info['reward_closeness_to_puck']
+    
 def basic_sum_intermediate(info):
     """
     Combine the various rewards from the info dictionary into a single scalar reward.
@@ -72,7 +75,7 @@ class SinglePlayerHockeyEnv(gym.Env):
         Render the environment.
         """
 
-        self.env.render(*args, **kwargs)
+        return self.env.render(*args, **kwargs)
 
     def close(self):
         """
