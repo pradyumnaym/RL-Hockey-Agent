@@ -1,6 +1,9 @@
 batch_size: 128
 grad_steps: 32
 
+# number of episodes to collect experience from before starting training
+start_training_after: 100
+
 eval_freq: 500
 log_freq: 100
 eval_episodes: 1000

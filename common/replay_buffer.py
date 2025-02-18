@@ -46,6 +46,7 @@ class ReplayBuffer:
     def size(self):
         return len(self.buffer)
 
+
 class ReplayBufferTorch:
     def __init__ (self, max_size=1_000_000, device='cpu'):
         self.max_size = max_size
@@ -81,6 +82,3 @@ class ReplayBufferTorch:
 
     def size(self):
         return self.current_idx
-
-
-        

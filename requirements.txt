@@ -4,6 +4,7 @@ swig
 gymnasium[mujoco]
 pyyaml
 hydra-core==1.3.2
+pink-noise-rl==2.0.1
 
 hockey @ git+https://github.com/martius-lab/hockey-env.git
 

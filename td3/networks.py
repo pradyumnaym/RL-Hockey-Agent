@@ -46,6 +46,7 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         
         self.hidden_dims = hidden_dims
+        self.action_space = action_space
         self.action_dim = action_space.shape[0]
 
         # Build the network layers
@@ -66,6 +67,14 @@ class Actor(nn.Module):
         x = self.net(obs)
         x = self.output_activation(x)
         return x * self.action_scale + self.action_bias
+    
+    def scale_action(self, action):
+        low, high = self.action_space.low, self.action_space.high
+        return 2.0 * ((action - low) / (high - low)) - 1.0
+    
+    def unscale_action(self, scaled_action):
+        low, high = self.action_space.low, self.action_space.high
+        return low + (0.5 * (scaled_action + 1.0) * (high - low))
         
 
 class Critic(nn.Module):

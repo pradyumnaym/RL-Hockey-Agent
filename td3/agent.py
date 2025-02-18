@@ -56,7 +56,6 @@ class TD3(nn.Module):
         Q1, Q2 = self.critic(state, action)
         critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
 
-
         # Update the critic
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -67,7 +66,6 @@ class TD3(nn.Module):
         # Get policy loss
         if iteration % self.config.policy_delay == 0:
             # use the first Q network to get the policy loss
-
             # Update the actor
             self.actor_optimizer.zero_grad()
             actor_loss.backward()

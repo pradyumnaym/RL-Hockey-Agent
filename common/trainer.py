@@ -3,7 +3,7 @@ import torch
 import time
 import hydra   
 import copy
-
+import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
 
@@ -15,7 +15,7 @@ from common.opponent_pooler import OpponentPooler
 
 
 class Trainer:
-    def __init__(self, cfg, env, logger, replay_buffer):
+    def __init__(self, cfg, env, logger, replay_buffer, action_noise=None):
         self.config = cfg
         self.env = env
         self.agent = globals()[cfg.agent_name](cfg.agent, env.observation_space.shape[0], env.action_space)
@@ -40,9 +40,11 @@ class Trainer:
         self.agent.to(self.device)
         print(f"Using device: {self.device}")
         
+        self.action_noise = action_noise
+
         self.best_win_rate = 0
-        self.best_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'best_model.pth')
-        self.last_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'last_model.pth')
+        self.last_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model_last.pth')
+        self.best_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model_best.pth')
 
     def evaluate(self, train_episode):
         self.agent.eval()
@@ -78,9 +80,19 @@ class Trainer:
             start_time = time.time()
             obs, _ = self.env.reset()
             self.agent.train()
+
+            if self.action_noise is not None:
+                self.action_noise.reset()
+
             for step in range(self.config.max_steps_in_episode):
                 iteration += 1
                 action = self.agent.act(obs)
+
+                if self.action_noise is not None:
+                    noised_action = self.agent.actor.scale_action(action) + self.action_noise()
+                    noised_action = np.clip(noised_action, -1, 1)
+                    action = self.agent.actor.unscale_action(noised_action)
+
                 next_state, reward, done, truncated, _info = self.env.step(action)
 
                 self.replay_buffer.add(obs, next_state, action, reward, done)
@@ -90,7 +102,8 @@ class Trainer:
 
                 obs = next_state
 
-            if self.replay_buffer.size() < self.config.batch_size:
+            # If in initial period 
+            if self.replay_buffer.size() < self.config.batch_size or episode < self.config.start_training_after:
                 continue
 
             losses_dict = defaultdict(list)
@@ -117,7 +130,6 @@ class Trainer:
 
             out_folder = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
-           
             eval_results = {'train_episode': episode, 'eval_reward': 0}
             if episode % self.config.eval_freq == 0:
                 # save model
@@ -154,5 +166,6 @@ class Trainer:
             if episode % self.config.opponent_pooler.update_self_opponent_freq == 0:
                 # only update self opponent if the current win rate > 55%
                 if eval_results.get('eval_win_rate_self', 0) > 0.55:
-                    tmp_opponent = torch.load(os.path.join(out_folder, 'model.pth'), weights_only=False)
+                    load_path = self.best_model_path if os.path.exists(self.best_model_path) else self.last_model_path
+                    tmp_opponent = torch.load(load_path, weights_only=False)
                     self.opponent_pooler.update_self_opponent(tmp_opponent)
