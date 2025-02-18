@@ -30,9 +30,9 @@ class Trainer:
         self.opponent_pooler = OpponentPooler(self.config.opponent_pooler.weak_prob, self.config.opponent_pooler.strong_prob, 
                                               self.config.opponent_pooler.self_prob, copy.deepcopy(self.agent))
 
-        if self.config.device == 'cuda' and torch.cuda.is_available():
+        if 'cuda' in self.config.device and torch.cuda.is_available():
             self.device = self.config.device
-        elif self.config.device == 'mps' and torch.backends.mps.is_available():
+        elif 'mps' in self.config.device and torch.backends.mps.is_available():
             self.device = self.config.device
         else:
             self.device = 'cpu'
@@ -78,6 +78,11 @@ class Trainer:
         pbar = tqdm(range(1, self.config.max_episodes+1), position=0, leave=True)
         for episode in pbar:
             start_time = time.time()
+
+            # randomly select an opponent from the opponent pool (by predefined probability)
+            opponent = self.opponent_pooler.sample_opponent()
+            self.env.set_opponent(opponent)
+
             obs, _ = self.env.reset()
             self.agent.train()
 
@@ -128,8 +133,6 @@ class Trainer:
                 **mean_losses_dict
             }, write_to_file = episode % self.config.log_freq == 0)
 
-            out_folder = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-
             eval_results = {'train_episode': episode, 'eval_reward': 0}
             if episode % self.config.eval_freq == 0:
                 # save model
@@ -166,6 +169,7 @@ class Trainer:
             if episode % self.config.opponent_pooler.update_self_opponent_freq == 0:
                 # only update self opponent if the current win rate > 55%
                 if eval_results.get('eval_win_rate_self', 0) > 0.55:
+                    print("Updating self opponent")
                     load_path = self.best_model_path if os.path.exists(self.best_model_path) else self.last_model_path
                     tmp_opponent = torch.load(load_path, weights_only=False)
                     self.opponent_pooler.update_self_opponent(tmp_opponent)

@@ -8,7 +8,7 @@ eval_freq: 500
 log_freq: 100
 eval_episodes: 1000
 
-device: 'cpu'
+device: 'cuda'
 max_steps_in_episode: 250
 max_episodes: 20000
 
