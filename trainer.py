@@ -49,10 +49,10 @@ class Trainer:
         self.agent.to(self.config.device)
     
         iteration = 0
-        start_time = time.time()
 
         pbar = tqdm(range(1, self.config.max_episodes+1), position=0, leave=True)
         for episode in pbar:
+            start_time = time.time()
             obs, _ = self.env.reset()
             self.agent.train()
             for step in range(self.config.max_steps_in_episode):
@@ -90,7 +90,7 @@ class Trainer:
             self.logger.log({
                 'train_episode': episode,
                 **mean_losses_dict
-            })
+            }, write_to_file = episode % self.config.log_freq == 0)
 
             if episode % self.config.eval_freq == 0:
                 metrics = self.evaluate(episode)
