@@ -40,6 +40,9 @@ class Trainer:
         self.agent.to(self.device)
         print(f"Using device: {self.device}")
         
+        self.best_win_rate = 0
+        self.best_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'best_model.pth')
+        self.last_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'last_model.pth')
 
     def evaluate(self, train_episode):
         self.agent.eval()
@@ -118,14 +121,21 @@ class Trainer:
             eval_results = {'train_episode': episode, 'eval_reward': 0}
             if episode % self.config.eval_freq == 0:
                 # save model
-                torch.save(self.agent, os.path.join(out_folder, 'model.pth'))
+                torch.save(self.agent, self.last_model_path)
                 
                 eval_count = 0
+                max_prob = 0
+                main_opponent_name = "" # save best by eval_win_rate of the main opponent. The main opponent is the one with the highest pool probability
                 for opponent, name in zip([self.opponent_pooler.weak_opponent, 
                                           self.opponent_pooler.strong_opponent, 
                                           self.opponent_pooler.self_opponent], 
                                          ['weak', 'strong', 'self']):
-                    if self.config.opponent_pooler[f'{name}_prob'] > 0:
+                    prob = self.config.opponent_pooler[f'{name}_prob']
+                    if prob > max_prob:
+                        max_prob = prob
+                        main_opponent_name = name
+
+                    if prob > 0:
                         eval_count += 1
                         partial_eval_results = self.evaluate(opponent)
                         eval_results['eval_reward'] += partial_eval_results['eval_reward']
@@ -133,6 +143,13 @@ class Trainer:
 
                 eval_results['eval_reward'] /= eval_count
                 self.logger.log_metrics(eval_results)
+
+                # Check if the current model is the best
+                if main_opponent_name:
+                    main_opponent_win_rate = eval_results.get(f'eval_win_rate_{main_opponent_name}', 0)
+                    if main_opponent_win_rate > self.best_win_rate:
+                        self.best_win_rate = main_opponent_win_rate
+                        torch.save(self.agent, self.best_model_path)
 
             if episode % self.config.opponent_pooler.update_self_opponent_freq == 0:
                 # only update self opponent if the current win rate > 55%
