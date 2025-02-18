@@ -66,6 +66,12 @@ class SinglePlayerHockeyEnv(gym.Env):
         )
         self._first_time_touch = 1 - self._touched
         return step_reward
+    
+    def reward_scheme_v2(self, reward, _info):
+        return reward
+    
+    def reward_scheme_v3(self, reward, _info):
+        return _info['winner'] * 10
 
     def step(self, action):
         """
@@ -77,7 +83,7 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         obs, r, d, t, info = self.env.step(np.hstack([action,action2]))
 
-        step_reward = self.reward_scheme(r, info)
+        step_reward = self.reward_scheme_v3(r, info)
         self._step += 1
 
         return obs, step_reward, d, t, info
