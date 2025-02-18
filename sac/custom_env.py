@@ -85,7 +85,7 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         obs, r, d, t, info = self.env.step(np.hstack([action,action2]))
 
-        step_reward = self.reward_scheme_v3(r, info)
+        step_reward = self.reward_scheme(r, info)
         self._step += 1
 
         return obs, step_reward, d, t, info

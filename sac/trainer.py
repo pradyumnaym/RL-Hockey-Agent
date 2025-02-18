@@ -6,7 +6,7 @@ import copy
 from .agent import SACAgent 
 from common.replay_buffer import ReplayBuffer
 from common.logger import Logger
-from .opponent_pooler import OpponentPooler
+from ..common.opponent_pooler import OpponentPooler
 class Trainer:
     def __init__(self, config, env):
         self.config = config

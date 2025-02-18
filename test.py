@@ -1,7 +1,5 @@
-import yaml
 import os
-from sac.trainer import Trainer
-import gymnasium as gym
+import argparse
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -9,13 +7,17 @@ import matplotlib.animation as animation
 import hockey.hockey_env as h_env
 from sac.custom_env import SinglePlayerHockeyEnv
 
-from sac.agent import SACAgent
+from sac.agent import SAC
+from td3.agent import TD3
 
-def load_config():
-    # load config from yaml file
-    with open('configs/sac_v5.yaml', 'r') as f:
-        config = yaml.safe_load(f)
-    return config
+def parse_args():
+    parser = argparse.ArgumentParser(description="Evaluate SAC Agent")
+    parser.add_argument('--model-path', type=str, help='Path to the model file')
+    parser.add_argument('--opponent-type', choices=['weak', 'strong', 'custom'], 
+                        help='Path to the opponent file')
+    parser.add_argument('--opponent-path', type=str, help='Path to the opponent file. Only used if opponent-type is custom')
+    return parser.parse_args()
+
 
 def save_frames_as_gif(frames, path='./', filename='gym_animation.gif'):
 
@@ -32,18 +34,20 @@ def save_frames_as_gif(frames, path='./', filename='gym_animation.gif'):
     anim.save(path + filename, writer='imagemagick', fps=60)
 
 if __name__ == '__main__':
-    config = load_config()
-    # env = gym.make('Pendulum-v1', render_mode="rgb_array")
-    # env = SinglePlayerHockeyEnv(weak_mode=True)
+    args = parse_args()
     env = h_env.HockeyEnv()
     env.reset()
-    # agent = SACAgent(config, env.observation_space.shape[0], env.action_space.shape[0], env.action_space)
-    agent = torch.load(config['out_folder'] + '/sac_agent.pth',  weights_only=False)
+
+    agent = torch.load(args.model_path,  weights_only=False)
     agent.eval()
 
-    opponent = h_env.BasicOpponent(weak=False)
-    # opponent = torch.load("checkpoints/sac_v4/sac_agent.pth", weights_only=False)
-    # opponent.eval()
+    if args.opponent_type == 'weak':
+        opponent = h_env.BasicOpponent(weak=True)
+    elif args.opponent_type == 'strong':
+        opponent = h_env.BasicOpponent(weak=False)
+    elif args.opponent_type == 'custom':
+        opponent = torch.load(args.opponent_path, weights_only=False)
+        opponent.eval()
     
     for i in range(10):
         print(f"Episode {i+1} of 10")
@@ -64,9 +68,6 @@ if __name__ == '__main__':
 
             obs, reward, done, truncated, info = env.step(np.hstack([action1, action2]))
             print(step, reward)
-            # print("reward_closeness_to_puck", info["reward_closeness_to_puck"])
-            # print("reward_touch_puck", info["reward_touch_puck"])
-            # print("reward_puck_direction", info["reward_puck_direction"])
             frame = env.render(mode="rgb_array")
             frames.append(frame)
 
