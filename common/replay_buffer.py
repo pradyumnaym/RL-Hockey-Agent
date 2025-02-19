@@ -56,6 +56,11 @@ class ReplayBufferTorch:
         self.device = device
         self.fully_filled = False
 
+        if 'cuda' in device and not torch.cuda.is_available():
+            self.device = 'cpu'
+        elif 'mps' in device and not torch.backends.mps.is_available():
+            self.device = 'cpu'
+
     def add(self, obs, next_state, action, reward, done):
         for key, value in zip(self.keys, [obs, next_state, action, reward, done]):
             if isinstance(value, float):

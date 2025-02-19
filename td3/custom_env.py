@@ -63,6 +63,10 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         return obs, self.reward_scheme(info), d, t, info
     
+    def set_opponent(self, opponent):
+        self.opponent = opponent
+        self.reset()
+    
     def reset(self, *args, **kwargs):
         """
         Reset the environment.
