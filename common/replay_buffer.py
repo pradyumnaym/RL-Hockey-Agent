@@ -54,6 +54,7 @@ class ReplayBufferTorch:
         self.buffers = defaultdict(lambda: None)
         self.keys = ['obs', 'next_state', 'action', 'reward', 'done']
         self.device = device
+        self.fully_filled = False
 
     def add(self, obs, next_state, action, reward, done):
         for key, value in zip(self.keys, [obs, next_state, action, reward, done]):
@@ -71,6 +72,8 @@ class ReplayBufferTorch:
                 self.buffers[key][self.current_idx] = torch.from_numpy(value).to(self.device)
 
         self.current_idx = (self.current_idx + 1) % self.max_size
+        if self.current_idx == 0:
+            self.fully_filled = True
 
     def sample(self, batch_size):
         if self.size() < batch_size:
@@ -81,4 +84,6 @@ class ReplayBufferTorch:
         return [self.buffers[key][indices] for key in self.keys]
 
     def size(self):
+        if self.fully_filled:
+            return self.max_size
         return self.current_idx

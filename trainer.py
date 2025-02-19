@@ -82,7 +82,7 @@ class Trainer:
 
                 obs = next_state
 
-            # If in initial period 
+            # If in initial period
             if self.replay_buffer.size() < self.config.batch_size or episode < self.config.start_training_after:
                 continue
 
