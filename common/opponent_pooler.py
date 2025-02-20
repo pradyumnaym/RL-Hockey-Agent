@@ -19,12 +19,11 @@ class OpponentPooler:
 
         self.probabilities = [self.weak_prob, self.strong_prob, self.self_prob]
         
-    def sample_opponent(self):
-        return np.random.choice([self.weak_opponent, self.strong_opponent, self.self_opponent], 
-                                p=self.probabilities)
 
-    def get_opponent(self, opponent_type):
-        return next((opponent for opponent in self.opponents if opponent[0] == opponent_type), None)
+    def sample_opponent(self):
+        opponent = np.random.choice([self.weak_opponent, self.strong_opponent, self.self_opponent], 
+                                p=self.probabilities)
+        return opponent
     
     def update_self_opponent(self, self_opponent):
         self.self_opponent = self_opponent

@@ -27,8 +27,10 @@ class Trainer:
 
         self.logger = logger
         self.replay_buffer = replay_buffer
+        tmp_self_opponent = globals()[cfg.agent_name](cfg.agent, env.observation_space.shape[0], env.action_space)
+        tmp_self_opponent.load_state_dict(self.agent.state_dict())
         self.opponent_pooler = OpponentPooler(self.config.opponent_pooler.weak_prob, self.config.opponent_pooler.strong_prob, 
-                                              self.config.opponent_pooler.self_prob, copy.deepcopy(self.agent))
+                                              self.config.opponent_pooler.self_prob, tmp_self_opponent)
 
         if 'cuda' in self.config.device and torch.cuda.is_available():
             self.device = self.config.device
@@ -46,14 +48,15 @@ class Trainer:
         self.last_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model_last.pth')
         self.best_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model_best.pth')
 
-    def evaluate(self, train_episode):
+    def evaluate(self, opponent):
         self.agent.eval()
         mean_reward = 0
         win_rate = 0
-        for episode in range(self.config.eval_episodes):
+        for episode in range(self.config['eval_episodes']):
+            self.env.set_opponent(opponent)
             obs, _ = self.env.reset()
             episode_reward = 0
-            for step in range(self.config.max_steps_in_episode):
+            for step in range(self.config['max_steps_in_episode']):
                 action = self.agent.act(obs)
                 obs, reward, done, truncated, _info = self.env.step(action)
 
@@ -68,9 +71,10 @@ class Trainer:
 
             mean_reward += episode_reward
             
-        mean_reward /= self.config.eval_episodes
-        win_rate /= self.config.eval_episodes
-        return {'train_episode': train_episode, 'eval_reward': mean_reward, 'eval_win_rate': win_rate}
+        mean_reward /= self.config['eval_episodes']
+        win_rate /= self.config['eval_episodes']
+
+        return {'eval_reward': mean_reward, f'eval_win_rate': win_rate}
     
     def train(self):
         iteration = 0
@@ -167,9 +171,12 @@ class Trainer:
                         torch.save(self.agent, self.best_model_path)
 
             if episode % self.config.opponent_pooler.update_self_opponent_freq == 0:
-                # only update self opponent if the current win rate > 55%
-                if eval_results.get('eval_win_rate_self', 0) > 0.55:
+                # only update self opponent if the current win rate > 80%
+                if eval_results.get('eval_win_rate_self', 0) > 0.8:
                     print("Updating self opponent")
-                    load_path = self.best_model_path if os.path.exists(self.best_model_path) else self.last_model_path
-                    tmp_opponent = torch.load(load_path, weights_only=False)
-                    self.opponent_pooler.update_self_opponent(tmp_opponent)
+                    # load_path = self.best_model_path if os.path.exists(self.best_model_path) else self.last_model_path
+                    
+                    tmp_self_opponent = globals()[self.config.agent_name](self.config.agent, self.env.observation_space.shape[0], self.env.action_space)
+                    # copy weights from the current model
+                    tmp_self_opponent.load_state_dict(self.agent.state_dict())
+                    self.opponent_pooler.update_self_opponent(tmp_self_opponent)
