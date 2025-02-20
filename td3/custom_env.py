@@ -5,27 +5,6 @@ import gymnasium as gym
 from importlib import reload
 from stable_baselines3.common.env_checker import check_env
 
-def new_reward_scheme(info):
-    return info['reward_closeness_to_puck']
-    
-def basic_sum_intermediate(info):
-    """
-    Combine the various rewards from the info dictionary into a single scalar reward.
-
-    Args:
-    - info: a dictionary containing the rewards from the environment
-
-    Returns:
-    - a scalar reward
-    """
-    # Note: we can also use the 'winner' key to determine the final reward (1 for win, -1 for loss)
-    # these are just the intermediate rewards
-
-    keys = ['reward_closeness_to_puck', 'reward_touch_puck', 'reward_puck_direction']
-
-    final_reward = info['winner'] * 10          # 10 for win, -10 for loss, 0 for draw
-    return sum([info[k] for k in keys]) + final_reward
-
 
 class SinglePlayerHockeyEnv(gym.Env):
     """
@@ -36,7 +15,7 @@ class SinglePlayerHockeyEnv(gym.Env):
     for easy integration with RL algorithms.
     """
 
-    def __init__(self, weak_mode = False, reward_scheme = basic_sum_intermediate):
+    def __init__(self, weak_mode = False, reward_scheme = '1'):
         """
         Initialize the environment.
 
@@ -51,6 +30,24 @@ class SinglePlayerHockeyEnv(gym.Env):
         self.observation_space = self.env.observation_space
         self.reward_scheme = reward_scheme
 
+    def reward_scheme_1(self, info):
+        """
+        Combine the various rewards from the info dictionary into a single scalar reward.
+
+        Args:
+        - info: a dictionary containing the rewards from the environment
+
+        Returns:
+        - a scalar reward
+        """
+        # Note: we can also use the 'winner' key to determine the final reward (1 for win, -1 for loss)
+        # these are just the intermediate rewards
+
+        keys = ['reward_closeness_to_puck', 'reward_touch_puck', 'reward_puck_direction']
+
+        final_reward = info['winner'] * 10          # 10 for win, -10 for loss, 0 for draw
+        return sum([info[k] for k in keys]) + final_reward
+
     def step(self, action):
         """
         Take a step in the environment given an action.
@@ -61,7 +58,7 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         obs, r, d, t, info = self.env.step(np.hstack([action,action2]))
 
-        return obs, self.reward_scheme(info), d, t, info
+        return obs, getattr(self, 'reward_scheme_' + self.reward_scheme)(info), d, t, info
     
     def set_opponent(self, opponent):
         self.opponent = opponent

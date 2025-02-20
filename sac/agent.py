@@ -53,7 +53,7 @@ class SAC(nn.Module):
         self.actor_scheduler.step()
         self.critic_scheduler.step()
 
-    def update(self, iteration, data):
+    def update(self, iteration, data, weights):
         self.actor.train()
         self.critic.train()
         self.critic_target.train()
@@ -119,4 +119,4 @@ class SAC(nn.Module):
 
             losses_dict['alpha_loss'] = alpha_loss.item()
         
-        return losses_dict
+        return losses_dict, None
