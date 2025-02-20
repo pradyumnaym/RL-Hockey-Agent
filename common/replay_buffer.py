@@ -104,7 +104,11 @@ class PrioritizedReplayBuffer:
         self.alpha = alpha
         self.beta = beta
         self.buffer = PRB(alpha=alpha, beta=beta, storage=ListStorage(max_size))
-        self.device = device
+
+        if 'cuda' in device and not torch.cuda.is_available():
+            self.device = 'cpu'
+        elif 'mps' in device and not torch.backends.mps.is_available():
+            self.device = 'cpu'
 
         assert beta <= 1, "Beta should be less than or equal to 1"
 
