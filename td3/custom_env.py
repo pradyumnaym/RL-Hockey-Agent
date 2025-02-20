@@ -29,6 +29,9 @@ class SinglePlayerHockeyEnv(gym.Env):
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
         self.reward_scheme = reward_scheme
+        self.touched = 0
+        self.first_time_touch = 1
+        self.steps = 0
 
     def reward_scheme_1(self, info):
         """
@@ -47,6 +50,27 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         final_reward = info['winner'] * 10          # 10 for win, -10 for loss, 0 for draw
         return sum([info[k] for k in keys]) + final_reward
+    
+    def reward_scheme_2(self, info):
+        """
+        Combine the various rewards from the info dictionary into a single scalar reward.
+
+        Args:
+        - info: a dictionary containing the rewards from the environment
+
+        Returns:
+        - a scalar reward
+        """
+        # Note: we can also use the 'winner' key to determine the final reward (1 for win, -1 for loss)
+        # these are just the intermediate rewards
+
+        keys = ['reward_closeness_to_puck', 'reward_touch_puck', 'reward_puck_direction']
+
+        final_reward = info['winner'] * 15          # 10 for win, -10 for loss, 0 for draw
+        final_reward = sum([info[k] for k in keys]) + final_reward + 5 * info['reward_closeness_to_puck'] - (1 - self.touched) * 0.1 + self.touched * self.first_time_touch * 0.1 * self.steps
+
+        self.touched = max(self.touched, info['reward_touch_puck'])
+        self.first_time_touch = 1 - self.touched
 
     def step(self, action):
         """
@@ -57,6 +81,7 @@ class SinglePlayerHockeyEnv(gym.Env):
         action2 = self.opponent.act(obs2)
 
         obs, r, d, t, info = self.env.step(np.hstack([action,action2]))
+        self.steps += 1
 
         return obs, getattr(self, 'reward_scheme_' + self.reward_scheme)(info), d, t, info
     
@@ -68,7 +93,9 @@ class SinglePlayerHockeyEnv(gym.Env):
         """
         Reset the environment.
         """
-
+        self.touched = 0
+        self.first_time_touch = 1
+        self.steps = 0
         return self.env.reset(*args, **kwargs)
     
     def render(self, *args, **kwargs):

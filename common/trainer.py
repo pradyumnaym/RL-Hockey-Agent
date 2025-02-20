@@ -82,6 +82,9 @@ class Trainer:
 
             # randomly select an opponent from the opponent pool (by predefined probability)
             opponent = self.opponent_pooler.sample_opponent()
+            if isinstance(opponent, torch.nn.Module):
+                opponent = opponent.to(self.device)
+                
             self.env.set_opponent(opponent)
 
             obs, _ = self.env.reset()

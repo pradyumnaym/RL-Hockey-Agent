@@ -10,7 +10,7 @@ def get_activation(activation):
     elif activation == 'sigmoid':
         return nn.Sigmoid()
     elif activation == 'leaky_relu':
-        return nn.LeakyReLU()
+        return nn.LeakyReLU(negative_slope=0.1)
     elif activation == 'elu':
         return nn.ELU()
     elif activation == 'selu':
