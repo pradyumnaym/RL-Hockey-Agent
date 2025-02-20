@@ -30,7 +30,7 @@ class TD3(nn.Module):
         obs = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(next(self.actor.parameters()).device)
         return self.actor(obs).detach().cpu().numpy()[0]
     
-    def update(self, iteration, data):
+    def update(self, iteration, data, weights):
         state, next_state, action, reward, done = data
 
         device = next(self.actor.parameters()).device
@@ -40,6 +40,7 @@ class TD3(nn.Module):
             action = torch.tensor(action, dtype=torch.float32).to(device)
             reward = torch.tensor(reward, dtype=torch.float32).to(device).unsqueeze(1)
             done = torch.tensor(done, dtype=torch.float32).to(device).unsqueeze(1)
+            weights = torch.tensor(weights, dtype=torch.float32).to(device).unsqueeze(1)
 
         # Compute the TD target 
         with torch.no_grad():
@@ -54,7 +55,10 @@ class TD3(nn.Module):
 
         # Compute the critic loss
         Q1, Q2 = self.critic(state, action)
-        critic_loss = F.mse_loss(Q1, target_Q) + F.mse_loss(Q2, target_Q)
+        critic_loss = ((Q1 - target_Q)**2) * weights + ((Q2 - target_Q)**2) * weights
+        critic_loss = critic_loss.mean()
+
+        td_errors = torch.abs(Q1 - target_Q).detach().cpu().numpy()
 
         # Update the critic
         self.critic_optimizer.zero_grad()
@@ -79,4 +83,4 @@ class TD3(nn.Module):
             'critic_loss': critic_loss.item(),
             'actor_loss': actor_loss.item(),
             'buffer_reward': reward.mean().item()
-        }
+        }, td_errors

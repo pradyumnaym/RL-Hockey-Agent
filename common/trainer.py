@@ -4,10 +4,12 @@ import time
 import hydra   
 import copy
 import numpy as np
+
+
 from collections import defaultdict
 from tqdm import tqdm
 
-from common.replay_buffer import ReplayBuffer
+from common.replay_buffer import ReplayBuffer, PrioritizedReplayBuffer
 from common.logger import Logger
 from td3.agent import TD3
 from sac.agent import SAC
@@ -27,8 +29,7 @@ class Trainer:
 
         self.logger = logger
         self.replay_buffer = replay_buffer
-        self.opponent_pooler = OpponentPooler(self.config.opponent_pooler.weak_prob, self.config.opponent_pooler.strong_prob, 
-                                              self.config.opponent_pooler.self_prob, copy.deepcopy(self.agent))
+        self.opponent_pooler = OpponentPooler(**self.config.opponent_pooler, self_opponent=copy.deepcopy(self.agent))
 
         if 'cuda' in self.config.device and torch.cuda.is_available():
             self.device = self.config.device
@@ -99,9 +100,7 @@ class Trainer:
                     action = self.agent.actor.unscale_action(noised_action)
 
                 next_state, reward, done, truncated, _info = self.env.step(action)
-
-                self.replay_buffer.add(obs, next_state, action, reward, done)
-
+                self.replay_buffer.add((obs, next_state, action, reward, done))
                 if done or truncated:
                     break
 
@@ -115,8 +114,16 @@ class Trainer:
 
             self.agent.train()
             for _ in range(self.config.grad_steps):
-                data = self.replay_buffer.sample(self.config.batch_size)
-                loss_dict = self.agent.update(iteration, data)
+                data, weights = self.replay_buffer.sample(self.config.batch_size, episode=episode)
+
+                if isinstance(self.replay_buffer, PrioritizedReplayBuffer):
+                    weights, indices = weights['_weight'], weights['index']
+                    weights = weights.to(self.device)
+
+                loss_dict, td_errors = self.agent.update(iteration, data, weights)
+
+                if isinstance(self.replay_buffer, PrioritizedReplayBuffer):
+                    self.replay_buffer.update_priorities(indices, td_errors)
 
                 for key, value in loss_dict.items():
                     losses_dict[key].append(value)
@@ -141,11 +148,11 @@ class Trainer:
                 eval_count = 0
                 max_prob = 0
                 main_opponent_name = "" # save best by eval_win_rate of the main opponent. The main opponent is the one with the highest pool probability
-                for opponent, name in zip([self.opponent_pooler.weak_opponent, 
+                for idx, (opponent, name) in enumerate(zip([self.opponent_pooler.weak_opponent, 
                                           self.opponent_pooler.strong_opponent, 
                                           self.opponent_pooler.self_opponent], 
-                                         ['weak', 'strong', 'self']):
-                    prob = self.config.opponent_pooler[f'{name}_prob']
+                                         ['weak', 'strong', 'self'])):
+                    prob = self.opponent_pooler.get_current_probabilities()[idx]
                     if prob > max_prob:
                         max_prob = prob
                         main_opponent_name = name

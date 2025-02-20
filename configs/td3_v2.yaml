@@ -1,0 +1,76 @@
+batch_size: 256
+grad_steps: 32
+
+# number of episodes to collect experience from before starting training
+start_training_after: 200
+
+eval_freq: 1200
+log_freq: 300
+eval_episodes: 100
+
+device: 'cuda'
+max_steps_in_episode: 250
+max_episodes: 50000
+
+agent_name: TD3
+
+trainer:
+    _target_: common.trainer.Trainer
+    env:
+        _target_: td3.custom_env.SinglePlayerHockeyEnv
+        weak_mode: True
+    logger:
+        _target_: common.logger.Logger
+    replay_buffer:
+        _target_: common.replay_buffer.PrioritizedReplayBuffer
+        max_episodes: ${max_episodes}
+        alpha: 0.6
+        beta: 0.4
+        max_size: 100000
+        device: ${device}
+    action_noise:
+        _target_: pink.PinkActionNoise
+        sigma: 0.3
+        seq_len: ${max_steps_in_episode}
+        action_dim: 8
+
+agent:
+    actor_lr: 0.0007
+    critic_lr: 0.0007
+
+    actor_lr_milestones: [5000, 10000]
+    critic_lr_milestones: [5000, 10000]
+
+    actor_lr_gamma: 0.5
+    critic_lr_gamma: 0.5
+
+    discount_factor: 0.99
+
+    critic_target_update_freq: 1
+    critic_target_tau: 0.005
+
+    policy_noise: 0.2
+    noise_clip: 0.5
+
+    policy_delay: 2
+    tau: 0.005
+    
+    actor:
+        hidden_dims: [256, 256]
+        activation: relu
+        output_activation: tanh
+
+    critic:
+        hidden_dims: [256, 256]
+        activation: relu
+
+    resume_from: null
+
+# opponent pooler - values can either be floats or list of floats. 
+# If list, the max_episodes should also be mentioned.
+opponent_pooler:
+    weak_prob:   [1.0, 1.0, 0.9, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.15, 0.10, 0.05, 0.05]              # last value is not used
+    strong_prob: [0.0, 0.0, 0.0, 0.05, 0.10, 0.15, 0.25, 0.30, 0.40, 0.45, 0.50, 0.50, 0.55, 0.60]
+    self_prob:   [0.0, 0.0, 0.1, 0.15, 0.20, 0.25, 0.25, 0.30, 0.30, 0.35, 0.35, 0.40, 0.40, 0.35]
+    max_episodes: ${max_episodes}
+    update_self_opponent_freq: 1000
