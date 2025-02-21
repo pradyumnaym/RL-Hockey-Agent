@@ -31,7 +31,13 @@ class Trainer:
         self.replay_buffer = replay_buffer
         tmp_self_opponent = globals()[cfg.agent_name](cfg.agent, env.observation_space.shape[0], env.action_space)
         tmp_self_opponent.load_state_dict(self.agent.state_dict())
-        self.opponent_pooler = OpponentPooler(**self.config.opponent_pooler, self_opponent=tmp_self_opponent)
+        # custom opponents: previously trained Pytorch models (load from files)
+        custom_opponents = []
+        for path in cfg.opponent_pooler.custom_weight_paths:
+            tmp_custom_opponent = torch.load(path, weights_only=False, map_location='cpu')
+            tmp_custom_opponent.eval()
+            custom_opponents.append(tmp_custom_opponent)  
+        self.opponent_pooler = OpponentPooler(**self.config.opponent_pooler, self_opponent=tmp_self_opponent, custom_opponents=custom_opponents)
 
         if 'cuda' in self.config.device and torch.cuda.is_available():
             self.device = self.config.device
@@ -152,10 +158,11 @@ class Trainer:
                 eval_count = 0
                 max_prob = 0
                 main_opponent_name = "" # save best by eval_win_rate of the main opponent. The main opponent is the one with the highest pool probability
-                for idx, (opponent, name) in enumerate(zip([self.opponent_pooler.weak_opponent, 
+                for idx, (opponents, name) in enumerate(zip([self.opponent_pooler.weak_opponent, 
                                           self.opponent_pooler.strong_opponent, 
-                                          self.opponent_pooler.self_opponent], 
-                                         ['weak', 'strong', 'self'])):
+                                          self.opponent_pooler.self_opponent,
+                                          self.opponent_pooler.custom_opponents], 
+                                         ['weak', 'strong', 'self', 'custom'])):
                     prob = self.opponent_pooler.get_current_probabilities()[idx]
                     if prob > max_prob:
                         max_prob = prob
@@ -163,7 +170,16 @@ class Trainer:
 
                     if prob > 0:
                         eval_count += 1
-                        partial_eval_results = self.evaluate(opponent)
+                        if name != 'custom': # single opponent (weak, strong, self)
+                            partial_eval_results = self.evaluate(opponents)
+                        else: # custom opponents (multiple Pytorch opponents)
+                            partial_eval_results = []
+                            for opponent in opponents:
+                                eval_results_per_custom_opponent = self.evaluate(opponent)
+                                partial_eval_results.append(eval_results_per_custom_opponent)
+                            # mean of the results over all custom opponents
+                            partial_eval_results = {k: sum(d[k] for d in partial_eval_results) / len(partial_eval_results) for k in partial_eval_results[0]}
+
                         eval_results['eval_reward'] += partial_eval_results['eval_reward']
                         eval_results[f'eval_win_rate_{name}'] = partial_eval_results['eval_win_rate']
 
