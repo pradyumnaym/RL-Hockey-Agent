@@ -105,6 +105,7 @@ class PrioritizedReplayBuffer:
         self.beta = beta
         self.buffer = PRB(alpha=alpha, beta=beta, storage=ListStorage(max_size))
 
+        self.device = device
         if 'cuda' in device and not torch.cuda.is_available():
             self.device = 'cpu'
         elif 'mps' in device and not torch.backends.mps.is_available():
