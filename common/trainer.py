@@ -54,6 +54,7 @@ class Trainer:
         self.best_win_rate = 0
         self.last_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model_last.pth')
         self.best_model_path = os.path.join(hydra.core.hydra_config.HydraConfig.get().runtime.output_dir, 'model_best.pth')
+        self.current_steps_model = self.best_model_path[:-4]
 
     def evaluate(self, opponent):
         self.agent.eval()
@@ -154,6 +155,10 @@ class Trainer:
             }, write_to_file = episode % self.config.log_freq == 0)
 
             eval_results = {'train_episode': episode, 'eval_reward': 0}
+
+            if self.config.save_freq > 0 and episode % self.config.save_freq == 0:
+                torch.save(self.agent, self.current_steps_model + f'_{episode}.pth')
+
             if episode % self.config.eval_freq == 0:
                 # save model
                 torch.save(self.agent, self.last_model_path)

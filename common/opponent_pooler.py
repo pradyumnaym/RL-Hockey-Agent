@@ -29,8 +29,8 @@ class OpponentPooler:
 
         self.strong_opponent = h_env.BasicOpponent(weak=False)
         self.weak_opponent = h_env.BasicOpponent(weak=True)
-        self.self_opponent = self_opponent
-        self.self_opponent.eval()
+        self.self_opponents = [self_opponent]
+        self.self_opponents[0].eval()
 
         for opponent in custom_opponents:
             opponent.eval()
@@ -44,13 +44,13 @@ class OpponentPooler:
         elif choice == 'strong':
             return self.strong_opponent
         elif choice == 'self':
-            return self.self_opponent
+            return np.random.choice(self.self_opponents)
         elif choice == 'custom':
             return np.random.choice(self.custom_opponents)
     
     def update_self_opponent(self, self_opponent):
-        self.self_opponent = self_opponent
-        self.self_opponent.eval()
+        self_opponent.eval()
+        self.self_opponents.append(self_opponent)
 
     def get_current_probabilities(self):
         if self.step_size > 0:

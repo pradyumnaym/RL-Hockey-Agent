@@ -6,6 +6,7 @@ start_training_after: 100
 
 eval_freq: 1200
 log_freq: 300
+save_freq: 5000
 eval_episodes: 100
 
 device: 'cuda'
@@ -67,13 +68,17 @@ agent:
         hidden_dims: [256, 256]
         activation: leaky_relu
 
-    resume_from: /mnt/lustre/work/ponsmoll/pba549/RL-Hockey-Agent/outputs/2025-02-20/22-41-32/model_best.pth
+    resume_from: outputs/2025-02-21/23-13-30/model_best.pth
 
-# opponent pooler - values can either be floats or list of floats. 
-# If list, the max_episodes should also be mentioned.
+# opponent pooler
 opponent_pooler:
-    weak_prob:   0.0              # last value is not used
-    strong_prob: 1.0
-    self_prob:   0.0
+    weak_prob:      [0.2, 0.2, 0.2, 0.2, 0.1, 0.0]
+    strong_prob:    [0.8, 0.6, 0.4, 0.2, 0.1, 0.0]
+    self_prob:      [0.0, 0.0, 0.0, 0.2, 0.5, 0.9]
+    custom_prob:    [0.0, 0.2, 0.4, 0.4, 0.3, 0.1]
+    custom_weight_paths: ['checkpoints/model_best_sac_14.pth',                      # best sac agent        
+                          'outputs/2025-02-21/23-13-30/model_best.pth',             # best strong agent
+                          'outputs/2025-02-20/22-41-32/model_best.pth',             # best weak agent
+                          ]
     max_episodes: ${max_episodes}
     update_self_opponent_freq: 1000

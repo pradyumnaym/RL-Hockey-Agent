@@ -14,7 +14,7 @@ ipython_config.py
 
 outputs/
 run.sh
-
+checkpoints/
 *.out
 
 # Remove previous ipynb_checkpoints
