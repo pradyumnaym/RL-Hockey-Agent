@@ -68,4 +68,5 @@ opponent_pooler:
     weak_prob: 1.0
     strong_prob: 0.0
     self_prob: 0.0
+    max_episodes: ${max_episodes}
     update_self_opponent_freq: 1000

@@ -53,10 +53,14 @@ agent:
 
 # opponent pooler
 opponent_pooler:
-    weak_prob: 1.0
-    strong_prob: 0.0
+    weak_prob: 0.2
+    strong_prob: 0.2
     self_prob: 0.0
-    custom_prob: 0.0
-    custom_weight_paths: []
+    custom_prob: 0.6
+    custom_weight_paths: ['outputs/td3-best-02-21/model_best.pth',
+                          'outputs/2025-02-19/16-11-15/model_best.pth',
+                          'outputs/2025-02-19/16-50-55/model_best.pth',
+                          'outputs/2025-02-19/17-21-56/model_best.pth'
+                          ]
     max_episodes: ${max_episodes}
     update_self_opponent_freq: 1000

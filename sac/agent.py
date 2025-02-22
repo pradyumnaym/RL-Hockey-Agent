@@ -61,11 +61,12 @@ class SAC(nn.Module):
         state, next_state, action, reward, done = data
 
         device = next(self.actor.parameters()).device
-        state = torch.FloatTensor(state).to(device)
-        next_state = torch.FloatTensor(next_state).to(device)
-        action = torch.FloatTensor(action).to(device)
-        reward = torch.FloatTensor(reward).to(device).unsqueeze(1)
-        done = torch.FloatTensor(done).to(device).unsqueeze(1)
+        if not torch.is_tensor(state):
+            state = torch.FloatTensor(state).to(device)
+            next_state = torch.FloatTensor(next_state).to(device)
+            action = torch.FloatTensor(action).to(device)
+            reward = torch.FloatTensor(reward).to(device).unsqueeze(1)
+            done = torch.FloatTensor(done).to(device).unsqueeze(1)
 
         # get td target for critic
         with torch.no_grad():
