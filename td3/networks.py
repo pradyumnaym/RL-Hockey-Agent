@@ -19,7 +19,7 @@ def get_activation(activation):
         return nn.Identity()
     else:
         raise ValueError("Invalid activation function")
-    
+
 class EMA(nn.Module):
     def __init__(self, model, tau=0.005):
         super(EMA, self).__init__()

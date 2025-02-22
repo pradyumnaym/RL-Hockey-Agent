@@ -5,6 +5,7 @@ import gymnasium as gym
 from importlib import reload
 from stable_baselines3.common.env_checker import check_env
 
+from gymnasium.spaces import Box
 
 class SinglePlayerHockeyEnv(gym.Env):
     """
@@ -26,7 +27,7 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         self.env = h_env.HockeyEnv()
         self.opponent =  h_env.BasicOpponent(weak=weak_mode)
-        self.action_space = self.env.action_space
+        self.action_space = Box(low=-1, high=1, shape=(4,))
         self.observation_space = self.env.observation_space
         self.reward_scheme = reward_scheme
         self.touched = 0
@@ -71,6 +72,8 @@ class SinglePlayerHockeyEnv(gym.Env):
 
         self.touched = max(self.touched, info['reward_touch_puck'])
         self.first_time_touch = 1 - self.touched
+
+        return final_reward
 
     def step(self, action):
         """
