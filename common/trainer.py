@@ -168,7 +168,7 @@ class Trainer:
                 main_opponent_name = "" # save best by eval_win_rate of the main opponent. The main opponent is the one with the highest pool probability
                 for idx, (opponents, name) in enumerate(zip([self.opponent_pooler.weak_opponent, 
                                           self.opponent_pooler.strong_opponent, 
-                                          self.opponent_pooler.self_opponent,
+                                          self.opponent_pooler.self_opponents,
                                           self.opponent_pooler.custom_opponents], 
                                          ['weak', 'strong', 'self', 'custom'])):
                     prob = self.opponent_pooler.get_current_probabilities()[idx]
@@ -178,8 +178,10 @@ class Trainer:
 
                     if prob > 0:
                         eval_count += 1
-                        if name != 'custom': # single opponent (weak, strong, self)
+                        if name not in ['custom', 'self']: # single opponent (weak, strong)
                             partial_eval_results = self.evaluate(opponents)
+                        elif name == 'self':
+                            partial_eval_results = self.evaluate(self.opponent_pooler.self_opponents[-1])
                         else: # custom opponents (multiple Pytorch opponents)
                             partial_eval_results = []
                             for opponent in opponents:

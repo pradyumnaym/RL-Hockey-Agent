@@ -1,4 +1,4 @@
-batch_size: 128
+batch_size: 256
 grad_steps: 16
 
 # number of episodes to collect experience from before starting training
@@ -11,7 +11,7 @@ eval_episodes: 100
 
 device: 'cuda'
 max_steps_in_episode: 250
-max_episodes: 60000
+max_episodes: 100000
 
 agent_name: TD3
 
@@ -28,11 +28,11 @@ trainer:
         max_episodes: ${max_episodes}
         alpha: 0.6
         beta: 0.4
-        max_size: 100000
+        max_size: 1000000
         device: ${device}
     action_noise:
         _target_: td3.noise.PinkNoise
-        sigma: 0.4
+        sigma: 0.2
         seq_len: ${max_steps_in_episode}
         action_dim: 4
         max_episodes: ${max_episodes}
@@ -72,10 +72,10 @@ agent:
 
 # opponent pooler
 opponent_pooler:
-    weak_prob:      [0.2, 0.2, 0.2, 0.2, 0.1, 0.0]
-    strong_prob:    [0.8, 0.6, 0.4, 0.2, 0.1, 0.0]
-    self_prob:      [0.0, 0.0, 0.0, 0.2, 0.5, 0.9]
-    custom_prob:    [0.0, 0.2, 0.4, 0.4, 0.3, 0.1]
+    weak_prob:      [0.1, 0.1, 0.2, 0.2, 0.1, 0.0]
+    strong_prob:    [0.7, 0.5, 0.2, 0.2, 0.1, 0.0]
+    self_prob:      [0.0, 0.2, 0.3, 0.2, 0.5, 0.9]
+    custom_prob:    [0.2, 0.2, 0.3, 0.4, 0.3, 0.1]
     custom_weight_paths: ['checkpoints/model_best_sac_14.pth',                      # best sac agent        
                           'outputs/2025-02-21/23-13-30/model_best.pth',             # best strong agent
                           'outputs/2025-02-20/22-41-32/model_best.pth',             # best weak agent
