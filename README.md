@@ -80,6 +80,21 @@ To configure the agent to play against a single or multiple opponents, you can a
       self_prob: 0.5
   ```
 
+- **Curriculum Learning**: The opponent pooler also supports curriculum learning, where the agent is trained at increasingly difficult opponents. To provide a curriculum, simply provide a list of probabilities for each type of opponent, and the `max_episodes` variable from the hydra configuration (required to evenly space the different stages).
+  ```yaml
+  opponent_pooler:
+    weak_prob:      [0.1, 0.1, 0.2, 0.2, 0.1, 0.0]
+    strong_prob:    [0.7, 0.5, 0.2, 0.2, 0.1, 0.0]
+    self_prob:      [0.0, 0.2, 0.3, 0.2, 0.5, 0.9]
+    custom_prob:    [0.2, 0.2, 0.3, 0.4, 0.3, 0.1]
+    custom_weight_paths: ['checkpoints/model_best_sac_14.pth',                      # best sac agent        
+                          'outputs/2025-02-21/23-13-30/model_best.pth',             # best strong agent
+                          'outputs/2025-02-20/22-41-32/model_best.pth',             # best weak agent
+                          ]
+    max_episodes: ${max_episodes}
+    update_self_opponent_freq: 1000
+  ```
+
 Adjust these probabilities according to your training or evaluation strategy.
 
 ## Notes
