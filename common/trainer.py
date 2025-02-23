@@ -4,6 +4,7 @@ import time
 import hydra   
 import copy
 import numpy as np
+import glob
 
 
 from collections import defaultdict
@@ -212,4 +213,4 @@ class Trainer:
                     tmp_self_opponent = globals()[self.config.agent_name](self.config.agent, self.env.observation_space.shape[0], self.env.action_space)
                     # copy weights from the current model
                     tmp_self_opponent.load_state_dict(self.agent.state_dict())
-                    self.opponent_pooler.update_self_opponent(tmp_self_opponent)
+                    self.opponent_pooler.update_self_opponent(tmp_self_opponent, episode)

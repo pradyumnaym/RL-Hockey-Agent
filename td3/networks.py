@@ -2,6 +2,27 @@ import torch
 import copy
 import torch.nn as nn
 
+class PositionalEmbedding(nn.Module):
+    def __init__(self, L):
+        super(PositionalEmbedding, self).__init__()
+        self.L = L
+        # Create frequency bands: 2^0, 2^1, ..., 2^(L-1)
+        self.register_buffer("freq_bands", 2 ** torch.linspace(0, L - 1, steps=L))
+
+    def forward(self, x):
+        # x: (B, n)
+        # Expand dimensions for broadcasting: (B, n, 1)
+        x_expanded = x.unsqueeze(-1)
+        # Multiply with frequency bands (scaled by pi)
+        x_scaled = x_expanded * self.freq_bands * 3.141592653589793
+        # Compute sin and cos embeddings: both are (B, n, L)
+        emb_sin = torch.sin(x_scaled)
+        emb_cos = torch.cos(x_scaled)
+        # Concatenate along the last dimension to get (B, n, 2L)
+        embedded = torch.cat([emb_sin, emb_cos], dim=-1)
+        # Flatten last two dims to get (B, n * 2L)
+        return embedded.view(x.shape[0], -1)
+
 def get_activation(activation):
     if activation == 'relu':
         return nn.ReLU()

@@ -60,25 +60,28 @@ agent:
     tau: 0.003
     
     actor:
-        hidden_dims: [256, 256]
+        hidden_dims: [512, 512, 512]
         activation: leaky_relu
         output_activation: tanh
 
     critic:
-        hidden_dims: [256, 256]
+        hidden_dims: [512, 512, 512]
         activation: leaky_relu
 
-    resume_from: outputs/2025-02-21/23-13-30/model_best.pth
+    resume_from: null
 
 # opponent pooler
 opponent_pooler:
-    weak_prob:      [0.1, 0.1, 0.2, 0.2, 0.1, 0.0]
-    strong_prob:    [0.7, 0.5, 0.2, 0.2, 0.1, 0.0]
-    self_prob:      [0.0, 0.2, 0.3, 0.2, 0.5, 0.9]
-    custom_prob:    [0.2, 0.2, 0.3, 0.4, 0.3, 0.1]
+    weak_prob:      [0.6, 0.3, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    strong_prob:    [0.4, 0.5, 0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    self_prob:      [0.0, 0.1, 0.1, 0.2, 0.3, 0.2, 0.2, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5]
+    custom_prob:    [0.0, 0.1, 0.4, 0.6, 0.5, 0.6, 0.6, 0.4, 0.4, 0.3, 0.3, 0.3, 0.3]
     custom_weight_paths: ['checkpoints/model_best_sac_14.pth',                      # best sac agent        
+                          'checkpoints/model_best_sac_2102_23h55.pth',              # best sac agent (large model)
                           'outputs/2025-02-21/23-13-30/model_best.pth',             # best strong agent
-                          'outputs/2025-02-20/22-41-32/model_best.pth',             # best weak agent
+                          # 'outputs/2025-02-20/22-41-32/model_best.pth',             # best weak agent
                           ]
+    self_weights_dir: outputs/2025-02-22/22-29-11
     max_episodes: ${max_episodes}
     update_self_opponent_freq: 1000
+    collect_self_after: 30000
