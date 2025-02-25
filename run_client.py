@@ -62,6 +62,8 @@ class CustomAgent(Agent):
         super().__init__()
         self.model = torch.load(model_path, weights_only=False)
         self.model.eval()
+        if torch.cuda.is_available():
+            self.model.cuda()
 
     def get_step(self, observation: list[float]) -> list[float]:
         return self.model.act(observation).tolist()

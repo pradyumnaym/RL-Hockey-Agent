@@ -2,6 +2,7 @@ import torch
 import copy
 import torch.nn as nn
 
+
 class PositionalEmbedding(nn.Module):
     def __init__(self, L):
         super(PositionalEmbedding, self).__init__()
@@ -63,12 +64,16 @@ class EMA(nn.Module):
         return self.ema_model(*args)
 
 class Actor(nn.Module):
-    def __init__(self, obs_dim, action_space, hidden_dims, activation='relu', output_activation='tanh'):
+    def __init__(self, obs_dim, action_space, hidden_dims, activation='relu', output_activation='tanh', embedding_dim=None):
         super(Actor, self).__init__()
         
         self.hidden_dims = hidden_dims
         self.action_space = action_space
         self.action_dim = action_space.shape[0]
+
+        if embedding_dim is not None:
+            self.embedding = PositionalEmbedding(embedding_dim)
+            obs_dim = obs_dim * 2 * self.embedding.L
 
         # Build the network layers
         layers = [nn.Linear(obs_dim, hidden_dims[0]), get_activation(activation)]
@@ -85,6 +90,8 @@ class Actor(nn.Module):
         self.register_buffer("action_bias", torch.tensor((action_space.high + action_space.low) / 2., dtype=torch.float32))
 
     def forward(self, obs):
+        if hasattr(self, 'embedding'):
+            obs = self.embedding(obs)
         x = self.net(obs)
         x = self.output_activation(x)
         return x * self.action_scale + self.action_bias
@@ -99,10 +106,14 @@ class Actor(nn.Module):
         
 
 class Critic(nn.Module):
-    def __init__(self, obs_dim, action_space, hidden_dims, activation='relu'):
+    def __init__(self, obs_dim, action_space, hidden_dims, activation='relu', embedding_dim=None):
         super(Critic, self).__init__()
         action_dim = action_space.shape[0]
         input_dim = obs_dim + action_dim
+
+        if embedding_dim is not None:
+            self.embedding = PositionalEmbedding(embedding_dim)
+            input_dim = input_dim * 2 * self.embedding.L
 
         # Q1 network
         layers = [nn.Linear(input_dim, hidden_dims[0]), get_activation(activation)]
@@ -122,4 +133,6 @@ class Critic(nn.Module):
 
     def forward(self, obs, action):
         xu = torch.cat([obs, action], dim=-1)
+        if hasattr(self, 'embedding'):
+            xu = self.embedding(xu)
         return self.q1(xu), self.q2(xu)

@@ -185,7 +185,7 @@ class Trainer:
                             partial_eval_results = self.evaluate(self.opponent_pooler.self_opponents[-1])
                         else: # custom opponents (multiple Pytorch opponents)
                             partial_eval_results = []
-                            for opponent in opponents:
+                            for opponent in opponents[:self.config.custom_opponents_eval_count]:
                                 eval_results_per_custom_opponent = self.evaluate(opponent)
                                 partial_eval_results.append(eval_results_per_custom_opponent)
                             # mean of the results over all custom opponents
