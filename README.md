@@ -1,7 +1,7 @@
-### RL Agent for the Air Hockey Environment
+### RL Agent for the Laser Hockey Environment
 
 ### Installation Instructions
-The codebase has been tested with python3.9. We recommend using a virtual environment:
+The codebase has been tested with python3.10+. We recommend using a virtual environment:
 
 ```
 python3.10 -m venv .venv
